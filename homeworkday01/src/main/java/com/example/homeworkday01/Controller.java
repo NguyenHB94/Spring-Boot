@@ -2,21 +2,17 @@ package com.example.homeworkday01;
 
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import javax.websocket.server.PathParam;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.logging.SimpleFormatter;
+
+import static java.time.format.DateTimeFormatter.ofPattern;
 
 @RestController
 public class Controller {
@@ -25,32 +21,85 @@ public class Controller {
     public ResponseEntity<String> level1(@PathVariable("time") Long unixTimeAge) {
         try {
             isValidateInput(unixTimeAge);
-            Date date = new Date(unixTimeAge * 1000L);
-            SimpleDateFormat jdf = new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss z");
-            return ResponseEntity.ok(jdf.format(date));
+            return ResponseEntity.ok(convertUnixTimeToDate(unixTimeAge));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
 
     }
+
+
 
     @GetMapping("/level2")
     public ResponseEntity<String> level2(@RequestParam("time") Long unixTimeAge) {
         try {
             isValidateInput(unixTimeAge);
-            Date date = new Date(unixTimeAge * 1000L);
-            SimpleDateFormat jdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
-            LocalDate localDateinput = LocalDate.parse(jdf.format(date));
-            LocalDate localDateNow = LocalDate.now();
-            Period period = Period.between(localDateinput, localDateNow);
-            long yearsBetween = period.getYears();
-            long daysBetween = Math.abs(ChronoUnit.DAYS.between(localDateinput,localDateNow));
-            String result = String.valueOf(yearsBetween) + "\t" + String.valueOf(daysBetween);
+            String result = calculateAndShowNumbersOfYearsAndDays(convertUnixTimeToDate(unixTimeAge));
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @GetMapping("/level3/{time}")
+    public ResponseEntity<String> level3(
+            @PathVariable(value = "time", required = false) Long unixTimePath,
+            @RequestParam(value = "timeParam", required = false) Long unixTimeParam,
+            @RequestHeader(value = "unixTimeHeader",required = false) Long unixTimeHeader,
+            @RequestBody(required = false) Long unixTimeBody) {
+
+        Long unixTimeInput = null;
+
+        if (unixTimeParam != null) {
+            unixTimeInput = unixTimeParam;
+        }
+        if (unixTimePath != null) {
+            unixTimeInput = unixTimePath;
+        }
+        if (unixTimeHeader != null) {
+            unixTimeInput = unixTimeHeader;
+        }
+        if (unixTimeBody != null) {
+            unixTimeInput = unixTimeBody;
+        }
+
+        try {
+            isValidateInput(unixTimeInput);
+            String result = calculateAndShowNumbersOfYearsAndDays(convertUnixTimeToDate(unixTimeInput));
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("/level4")
+    public ResponseEntity<String> level4(@RequestParam("time") String stringTime) {
+        try {
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String date = LocalDate.parse(stringTime,dateTimeFormatter).toString();
+            String result = calculateAndShowNumbersOfYearsAndDays(date);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    private static int count = 0;
+    @GetMapping("/level5")
+    public ResponseEntity<String> level5(@RequestParam("time") String stringTime) {
+        try {
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String date = LocalDate.parse(stringTime,dateTimeFormatter).toString();
+            String result = calculateAndShowNumbersOfYearsAndDays(date);
+            count ++;
+            return ResponseEntity.ok(result + "\t" + count);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+
 
     private static boolean isValidateInput(Long unixTimeInput) {
         if (unixTimeInput == 0) {
@@ -63,6 +112,18 @@ public class Controller {
 
         return true;
     }
-    
+
+    private static String convertUnixTimeToDate(Long unixTime) {
+        Date date = new Date(unixTime * 1000L);
+        SimpleDateFormat jdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        return jdf.format(date);
+    }
+
+    private static String calculateAndShowNumbersOfYearsAndDays(String date) {
+        LocalDate localDateInput = LocalDate.parse(date);
+        long yearsBetween = Math.abs(ChronoUnit.YEARS.between(localDateInput, LocalDate.now()));
+        long daysBetween = Math.abs(ChronoUnit.DAYS.between(localDateInput, LocalDate.now()));
+        return String.valueOf(yearsBetween) + "\t" + String.valueOf(daysBetween);
+    }
 
 }
