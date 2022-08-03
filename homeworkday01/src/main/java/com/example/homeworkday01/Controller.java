@@ -41,11 +41,11 @@ public class Controller {
         }
     }
 
-    @GetMapping("/level3/{time}")
+    @GetMapping("/level3/{timePath}")
     public ResponseEntity<String> level3(
-            @PathVariable(value = "time", required = false) Long unixTimePath,
+            @PathVariable(value = "timePath", required = false) Long unixTimePath,
             @RequestParam(value = "timeParam", required = false) Long unixTimeParam,
-            @RequestHeader(value = "unixTimeHeader",required = false) Long unixTimeHeader,
+            @RequestHeader(value = "timeHeader",required = false) Long unixTimeHeader,
             @RequestBody(required = false) Long unixTimeBody) {
 
         Long unixTimeInput = null;
